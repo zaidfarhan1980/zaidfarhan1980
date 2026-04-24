@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🎉 Cheering Domino!</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      overflow-x: hidden;
+    }
+
+    h1 {
+      color: #f5c518;
+      font-size: 2.5rem;
+      margin-bottom: 0.4rem;
+      text-shadow: 0 0 16px #f5c518aa;
+      letter-spacing: 2px;
+    }
+
+    p.subtitle {
+      color: #cdd3de;
+      margin-bottom: 2.5rem;
+      font-size: 1.1rem;
+    }
+
+    .board {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 24px;
+      justify-content: center;
+      max-width: 900px;
+    }
+
+    /* ── Domino tile ── */
+    .domino {
+      width: 70px;
+      height: 140px;
+      background: #f2f2f2;
+      border-radius: 10px;
+      border: 3px solid #333;
+      box-shadow: 4px 4px 12px #00000066, inset 0 0 6px #ffffff55;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 8px;
+      cursor: pointer;
+      position: relative;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      user-select: none;
+    }
+
+    .domino:hover {
+      transform: scale(1.08) rotate(-2deg);
+      box-shadow: 6px 6px 20px #00000088, 0 0 18px #f5c518aa;
+    }
+
+    /* divider line */
+    .domino::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 8%;
+      width: 84%;
+      height: 2px;
+      background: #444;
+      transform: translateY(-50%);
+    }
+
+    .half {
+      width: 100%;
+      height: 48%;
+      display: grid;
+      grid-template-areas:
+        "tl .  tr"
+        "ml m  mr"
+        "bl .  br";
+      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-rows: 1fr 1fr 1fr;
+      align-items: center;
+      justify-items: center;
+    }
+
+    .pip {
+      width: 10px;
+      height: 10px;
+      background: #222;
+      border-radius: 50%;
+    }
+
+    /* pip placement helpers — classic domino layout */
+    .pip-1  { grid-area: m; }
+    .pip-2a { grid-area: tl; } .pip-2b { grid-area: br; }
+    .pip-3a { grid-area: tl; } .pip-3b { grid-area: m;  } .pip-3c { grid-area: br; }
+    .pip-4a { grid-area: tl; } .pip-4b { grid-area: tr; }
+    .pip-4c { grid-area: bl; } .pip-4d { grid-area: br; }
+    .pip-5a { grid-area: tl; } .pip-5b { grid-area: tr; }
+    .pip-5c { grid-area: m;  } .pip-5d { grid-area: bl; } .pip-5e { grid-area: br; }
+    .pip-6a { grid-area: tl; } .pip-6b { grid-area: tr; }
+    .pip-6c { grid-area: ml; } .pip-6d { grid-area: mr; }
+    .pip-6e { grid-area: bl; } .pip-6f { grid-area: br; }
+
+    /* Cross overlay */
+    .cross {
+      display: none;
+      position: absolute;
+      inset: 0;
+      border-radius: 8px;
+      background: rgba(220, 30, 30, 0.18);
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .cross::before,
+    .cross::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 80%;
+      height: 8px;
+      background: #e63030;
+      border-radius: 4px;
+      box-shadow: 0 0 8px #e63030cc;
+    }
+
+    .cross::before {
+      transform: translate(-50%, -50%) rotate(45deg);
+    }
+
+    .cross::after {
+      transform: translate(-50%, -50%) rotate(-45deg);
+    }
+
+    .domino.crossed {
+      opacity: 0.75;
+      transform: scale(0.97);
+      box-shadow: 3px 3px 8px #00000055;
+    }
+
+    .domino.crossed .cross {
+      display: block;
+    }
+
+    /* score banner */
+    .score {
+      margin-top: 2rem;
+      color: #f5c518;
+      font-size: 1.2rem;
+      letter-spacing: 1px;
+    }
+
+    .score span {
+      font-weight: bold;
+      font-size: 1.5rem;
+    }
+
+    /* confetti burst (pure CSS animation) */
+    @keyframes pop {
+      0%   { transform: translate(0, 0) scale(1); opacity: 1; }
+      100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
+    }
+
+    .confetti-piece {
+      position: fixed;
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+      pointer-events: none;
+      animation: pop 0.7s ease-out forwards;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🎉 Cheering Dominoes!</h1>
+  <p class="subtitle">Click a domino to cross it off!</p>
+
+  <div class="board" id="board"></div>
+
+  <p class="score">Crossed: <span id="count">0</span> / <span id="total">0</span></p>
+
+  <script>
+    // Pip configurations for values 0-6
+    const pipLayouts = {
+      0: [],
+      1: ['pip-1'],
+      2: ['pip-2a', 'pip-2b'],
+      3: ['pip-3a', 'pip-3b', 'pip-3c'],
+      4: ['pip-4a', 'pip-4b', 'pip-4c', 'pip-4d'],
+      5: ['pip-5a', 'pip-5b', 'pip-5c', 'pip-5d', 'pip-5e'],
+      6: ['pip-6a', 'pip-6b', 'pip-6c', 'pip-6d', 'pip-6e', 'pip-6f'],
+    };
+
+    // Generate a set of domino pairs (standard double-6 set)
+    const dominoPairs = [];
+    for (let i = 0; i <= 6; i++) {
+      for (let j = i; j <= 6; j++) {
+        dominoPairs.push([i, j]);
+      }
+    }
+
+    // Shuffle array
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    shuffle(dominoPairs);
+
+    function buildHalf(value) {
+      const half = document.createElement('div');
+      half.className = 'half';
+      pipLayouts[value].forEach(cls => {
+        const pip = document.createElement('div');
+        pip.className = `pip ${cls}`;
+        half.appendChild(pip);
+      });
+      return half;
+    }
+
+    function spawnConfetti(x, y) {
+      const colors = ['#f5c518', '#e63030', '#22c55e', '#3b82f6', '#a855f7', '#f97316'];
+      for (let i = 0; i < 12; i++) {
+        const piece = document.createElement('div');
+        piece.className = 'confetti-piece';
+        const angle = (i / 12) * 2 * Math.PI;
+        const dist = 50 + Math.random() * 60;
+        piece.style.setProperty('--dx', Math.cos(angle) * dist + 'px');
+        piece.style.setProperty('--dy', Math.sin(angle) * dist + 'px');
+        piece.style.left = x + 'px';
+        piece.style.top = y + 'px';
+        piece.style.background = colors[i % colors.length];
+        document.body.appendChild(piece);
+        piece.addEventListener('animationend', () => piece.remove());
+      }
+    }
+
+    const board = document.getElementById('board');
+    const countEl = document.getElementById('count');
+    const totalEl = document.getElementById('total');
+    let crossed = 0;
+
+    dominoPairs.forEach(([top, bottom]) => {
+      const tile = document.createElement('div');
+      tile.className = 'domino';
+
+      tile.appendChild(buildHalf(top));
+      tile.appendChild(buildHalf(bottom));
+
+      // Cross overlay
+      const crossDiv = document.createElement('div');
+      crossDiv.className = 'cross';
+      tile.appendChild(crossDiv);
+
+      tile.addEventListener('click', (e) => {
+        const wasCrossed = tile.classList.contains('crossed');
+        tile.classList.toggle('crossed');
+        crossed += wasCrossed ? -1 : 1;
+        countEl.textContent = crossed;
+
+        if (!wasCrossed) {
+          const rect = tile.getBoundingClientRect();
+          spawnConfetti(rect.left + rect.width / 2, rect.top + rect.height / 2);
+        }
+      });
+
+      board.appendChild(tile);
+    });
+
+    totalEl.textContent = dominoPairs.length;
+  </script>
+</body>
+</html>
