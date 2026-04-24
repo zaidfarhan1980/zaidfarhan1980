@@ -85,9 +85,9 @@
       height: 48%;
       display: grid;
       grid-template-areas:
-        "a . b"
-        ". c ."
-        "d . e";
+        "tl .  tr"
+        "ml m  mr"
+        "bl .  br";
       grid-template-columns: 1fr 1fr 1fr;
       grid-template-rows: 1fr 1fr 1fr;
       align-items: center;
@@ -101,17 +101,17 @@
       border-radius: 50%;
     }
 
-    /* pip placement helpers */
-    .pip-1 { grid-area: c; }
-    .pip-2a { grid-area: a; } .pip-2b { grid-area: e; }
-    .pip-3a { grid-area: a; } .pip-3b { grid-area: c; } .pip-3c { grid-area: e; }
-    .pip-4a { grid-area: a; } .pip-4b { grid-area: b; }
-    .pip-4c { grid-area: d; } .pip-4d { grid-area: e; }
-    .pip-5a { grid-area: a; } .pip-5b { grid-area: b; }
-    .pip-5c { grid-area: c; } .pip-5d { grid-area: d; } .pip-5e { grid-area: e; }
-    .pip-6a { grid-area: a; } .pip-6b { grid-area: b; }
-    .pip-6c { grid-area: c; } .pip-6d { grid-area: d; }
-    .pip-6e { grid-area: d; } .pip-6f { grid-area: e; }
+    /* pip placement helpers — classic domino layout */
+    .pip-1  { grid-area: m; }
+    .pip-2a { grid-area: tl; } .pip-2b { grid-area: br; }
+    .pip-3a { grid-area: tl; } .pip-3b { grid-area: m;  } .pip-3c { grid-area: br; }
+    .pip-4a { grid-area: tl; } .pip-4b { grid-area: tr; }
+    .pip-4c { grid-area: bl; } .pip-4d { grid-area: br; }
+    .pip-5a { grid-area: tl; } .pip-5b { grid-area: tr; }
+    .pip-5c { grid-area: m;  } .pip-5d { grid-area: bl; } .pip-5e { grid-area: br; }
+    .pip-6a { grid-area: tl; } .pip-6b { grid-area: tr; }
+    .pip-6c { grid-area: ml; } .pip-6d { grid-area: mr; }
+    .pip-6e { grid-area: bl; } .pip-6f { grid-area: br; }
 
     /* Cross overlay */
     .cross {
@@ -186,7 +186,7 @@
 </head>
 <body>
 
-  <h1>🎉 Cheering Dominos!</h1>
+  <h1>🎉 Cheering Dominoes!</h1>
   <p class="subtitle">Click a domino to cross it off!</p>
 
   <div class="board" id="board"></div>
